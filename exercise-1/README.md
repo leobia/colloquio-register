@@ -56,3 +56,5 @@ L'esercizio chiede di non usare framework ma solo Java, ho deciso di utilizzare 
 - Test di carico e di performance
 - Validazione più ricca, che riporti nel warning il motivo dello scarto (campo mancante, timestamp non valido, byte negativi, ...)
 - Più casi di test per il parser: riga vuota o di soli spazi e equivalente per i singoli campi, byte oltre il limite di `long`
+- Percentuali calcolate con il metodo dei resti maggiori, così che ogni colonna sommi esattamente `100.00` (ora l'arrotondamento `HALF_UP` può dare `99.99` o `100.01`)
+- Campi CSV tra virgolette secondo RFC 4180, nel caso un valore contenga `,` o `"`
