@@ -6,6 +6,10 @@ reports/
 
 # Personal work tickets
 tickets/
+.agents/
+.claude/
+skills-lock.json
+CLAUDE.local.md
 
 # IDE
 .idea/
