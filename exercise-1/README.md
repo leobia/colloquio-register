@@ -42,6 +42,12 @@ Esempio di riga:
 - **Percentuali**: calcolate sui record inclusi nel report e non sul totale. Inoltre con l'arrotondamento a 2 decimale `HALF_UP` con la somma si possono ottenere `99.99` o `100.01`. Se il totale di una colonna è 0, tutte le sue percentuali valgono `0.00`
 - **Ordinamento**: a parità di richieste vince byte decrescenti; a parità anche di byte, per IP in ordine alfabetico
 - **Output**: `reports/ipaddr.csv` oppure `reports/ipaddr.json`. La cartella `reports/` viene creata se manca e se il report esiste giá viene sovrascritto
+- **CSV**: separatore `,`, fine riga `\r\n`, punto decimale `.`, intestazione `ip_address,requests,requests_pct,bytes,bytes_pct`. Senza righe resta solo l'intestazione
+- **JSON**: scritto a mano senza librerie, un array di oggetti su una sola riga, nello stesso ordine del CSV. Le percentuali sono numeri con 2 decimali. Come nel CSV, l'indirizzo IP viene scritto così com'è, senza escape. Senza righe il file contiene `[]`
+
+  ```json
+  [{"ipAddress":"10.0.0.1","requests":10,"requestsPercentage":25.00,"bytes":1234,"bytesPercentage":30.12}]
+  ```
 
 
 ## Strumenti e dipendenze
@@ -61,3 +67,4 @@ L'esercizio chiede di non usare framework ma solo Java, ho deciso di utilizzare 
 - Test sull'ordinamento a parità sia di richieste sia di byte (IP in ordine crescente)
 - Percentuali calcolate con il metodo dei resti maggiori, così che ogni colonna sommi esattamente `100.00` (ora l'arrotondamento `HALF_UP` può dare `99.99` o `100.01`)
 - Campi CSV tra virgolette secondo RFC 4180, nel caso un valore contenga `,` o `"`
+- Escape delle stringhe JSON (`"`, `\` e caratteri di controllo), nel caso un indirizzo IP li contenga

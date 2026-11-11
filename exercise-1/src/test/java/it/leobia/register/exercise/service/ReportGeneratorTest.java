@@ -48,6 +48,22 @@ class ReportGeneratorTest {
     }
 
     @Test
+    void logIsTurnedIntoJsonReport() throws IOException {
+        // given
+        Path input = Files.writeString(tempDir.resolve("requests.log"), LOG, StandardCharsets.UTF_8);
+        Path output = tempDir.resolve("reports").resolve("ipaddr.json");
+
+        // when
+        generator.generate(input, output, null, OutputFormat.JSON);
+
+        // then
+        assertEquals("""
+                [{"ipAddress":"10.0.0.2","requests":2,"requestsPercentage":50.00,"bytes":500,"bytesPercentage":71.43},\
+                {"ipAddress":"10.0.0.1","requests":2,"requestsPercentage":50.00,"bytes":200,"bytesPercentage":28.57}]""",
+                Files.readString(output, StandardCharsets.UTF_8));
+    }
+
+    @Test
     void onlyRecordsOfTheGivenDayAreReported() throws IOException {
         // given
         Path input = Files.writeString(tempDir.resolve("requests.log"), LOG, StandardCharsets.UTF_8);
