@@ -1,86 +1,59 @@
 # Esercizio 1 register.it
 
+Genera un report del traffico per indirizzo IP (richieste, byte e relative percentuali) a partire da `logfiles/requests.log`, considerando solo le righe con status `OK`.
 
-Genera un report conteggiando le righe per indirizzo ip dal file di log `logfiles/requests.log`. Per le specifiche dettagliate rifarsi al pdf.
-
-Requisiti: **JDK 25**. Per maven si trovano i wrapper nel progetto: `mvnw` o `mvnw.cmd` (gli esempi sotto usano mvnw ma se si é su windows sostituirlo con mvnw.cmd)
+Requisiti: **JDK 21** o superiore ([download Temurin 21](https://adoptium.net/temurin/releases?version=21&os=any&arch=any)). Maven non serve: il wrapper è incluso nel progetto.
 
 ## Comandi
 
-### Build e test
+Dalla cartella `exercise-1/`, per compilare, eseguire i test e creare il jar:
+
 ```bash
 ./mvnw verify
 ```
+o
+```bat
+.\mvnw.cmd verify
+```
 
-### Run
+Per generare il report:
 
 ```bash
-java -jar target/traffic-report.jar                      # tutti i giorni, output CSV
-java -jar target/traffic-report.jar --date 2026-11-10    # solo il giorno indicato
-java -jar target/traffic-report.jar --format json        # output JSON
+java -jar target/traffic-report.jar                                  # tutti i giorni, CSV
+java -jar target/traffic-report.jar --date 2026-11-10 --format json  # un solo giorno, JSON
 ```
 
-Da lanciare dalla cartella `exercise-1/`: legge `logfiles/requests.log` e scrive `reports/ipaddr.csv` (o `reports/ipaddr.json`).
+Opzioni: `--date yyyy-MM-dd` (default: tutti i giorni) e `--format csv|json` (default: `csv`). Il report viene scritto in `reports/ipaddr.csv` o `reports/ipaddr.json`.
 
-| Opzione | Descrizione |
-|---|---|
-| `--date yyyy-MM-dd` | include solo le richieste del giorno indicato (default: tutti i giorni) |
-| `--format csv\|json` | formato di output (default: `csv`) |
+## Scelte principali
 
-| Exit code | Significato |
-|---|---|
-| `0` | report generato, il percorso viene stampato su standard output |
-| `1` | errore, con il messaggio su standard error: `logfiles/requests.log` mancante o illeggibile, valore mancante, data o formato non validi |
+- Per semplicitá i timestamp sono ISO-8601 senza offset
+- Le righe in input malformate (piú di 4 campi, timestamp non ISO-8601 o con fuso orario, byte negativi o non numerici, IP vuoto o con spazi interni) vengono scartate
+- Entrano nel report solo le righe con `STATUS` = `OK`
+- L'ordine é per request decrescente e i tie breaker sono: più byte e poi l'IP in ordine alfabetico
+- Le percentuali sono calcolate sui soli record inclusi, con 2 decimali `HALF_UP` quindi la somma puó anche fare `99.99` o `100.01`
+- Senza `--date` specificato l'output é su tutte le date 
+- CSV con separatore `,` e fine riga `\r\n`; JSON su una sola riga
+- Se il report in output esiste giá viene sovrascritto
 
-Le opzioni vengono lette per nome: argomenti non riconosciuti vengono ignorati.
+## Struttura del codice
 
-## Formato di input
+Package `it.leobia.register.exercise`:
 
-Nel file `logfiles/requests.log` si trovano le righe delle richieste da analizzare
+- `parser.LogParser`: valida una riga del log e la converte in `model.LogEntry`
+- `service.ReportGenerator`: legge, filtra, aggrega per IP, ordina e scrive il report (`model.ReportRow`)
+- `writer`: `CsvReportWriter` e `JsonReportWriter`, scelti tramite `OutputFormat`
 
-Esempio di riga:
+## Dipendenze
 
-```
-2026-11-10T08:15:30;1024;OK;192.168.0.1
-```
-
-## Assunzioni
-
-- Ogni riga di `logfiles/requests.log` contiene esattamente 4 campi separati da `;`
-- `TIMESTAMP` é una data ISO-8601 senza offset e gestione dei fusi orari per semplicitá `2026-11-10T08:15:30`
-- `BYTES` é intero non negativo 
-- `STATUS` é preso da RFC 2616 ed é tipo `OK`, `Not Found`
-- `REMOTE_ADDR` per semplicitá nella validazione controllo solamente che non abbia spazi nel mezzo
-- **Spazi**: ogni campo viene ripulito dagli spazi iniziali e finali prima della validazione
-- **Percentuali**: calcolate sui record inclusi nel report e non sul totale. Inoltre con l'arrotondamento a 2 decimale `HALF_UP` con la somma si possono ottenere `99.99` o `100.01`. Se il totale di una colonna è 0, tutte le sue percentuali valgono `0.00`
-- **Giorno del report**: l'esercizio parla di report giornaliero, ma senza `--date` il report include tutti i giorni presenti nel log; con `--date yyyy-MM-dd` si ottiene il report del singolo giorno
-- **Ordinamento**: a parità di richieste vince byte decrescenti; a parità anche di byte, per IP in ordine alfabetico
-- **Output**: `reports/ipaddr.csv` oppure `reports/ipaddr.json`. La cartella `reports/` viene creata se manca e se il report esiste giá viene sovrascritto
-- **CSV**: separatore `,`, fine riga `\r\n`, punto decimale `.`, intestazione `ip_address,requests,requests_pct,bytes,bytes_pct`. Senza righe resta solo l'intestazione
-- **JSON**: scritto a mano senza librerie, un array di oggetti su una sola riga, nello stesso ordine del CSV. Le percentuali sono numeri con 2 decimali. Come nel CSV, l'indirizzo IP viene scritto così com'è, senza escape. Senza righe il file contiene `[]`
-
-  ```json
-  [{"ipAddress":"10.0.0.1","requests":10,"requestsPercentage":25.00,"bytes":1234,"bytesPercentage":30.12}]
-  ```
-
-
-## Strumenti e dipendenze
-
-L'esercizio chiede di non usare framework ma solo Java, ho deciso di utilizzare Maven perché comunque molto utile per strumento di build e la dipendenza junit perché anche questa molto utile nei test
+Maven serve solo per la build e JUnit è usato solo nei test
 
 ## Possibili miglioramenti
 
-- Percorsi di input e output configurabili
-- Errore d'uso per opzioni sconosciute o ripetute (ora vengono ignorate, e per un'opzione ripetuta vale la prima)
-- Opzione `--help` ed exit code distinti per errori d'uso e di I/O
-- Evitare sovrascritture di report vecchi
-- Scrittura del report in un file temporaneo e poi rename, così che un errore a metà non lasci un file parziale
-- Validazione stretta degli indirizzi IPv4/IPv6
-- Timestamp con fuso orario
-- Test di carico e di performance
-- Validazione più ricca, che riporti nel warning il motivo dello scarto (campo mancante, timestamp non valido, byte negativi, ...)
-- Più casi di test per il parser: spazi attorno ai campi, riga vuota o di soli spazi e equivalente per i singoli campi, byte oltre il limite di `long`
-- Test sull'ordinamento a parità sia di richieste sia di byte (IP in ordine crescente)
-- Percentuali calcolate con il metodo dei resti maggiori, così che ogni colonna sommi esattamente `100.00` (ora l'arrotondamento `HALF_UP` può dare `99.99` o `100.01`)
-- Campi CSV tra virgolette secondo RFC 4180, nel caso un valore contenga `,` o `"`
-- Escape delle stringhe JSON (`"`, `\` e caratteri di controllo), nel caso un indirizzo IP li contenga
+- Percorsi di input e output configurabili, opzione `--help` ed exit code distinti
+- Scrittura di un file temporaneo e poi rename e nessuna sovrascrittura dei report precedenti
+- Validazione stretta di IPv4/IPv6 e timestamp con fuso orario
+- Motivo dello scarto nel warning delle righe malformate
+- Migliorare le percentuali, perché ogni colonna sommi sempre `100.00`
+- Quoting dei campi CSV (RFC 4180) ed escape delle stringhe JSON
+- Più test: ordinamento a parità di richieste e byte, carico e performance
