@@ -18,8 +18,21 @@ Requisiti: **JDK 25**. Per maven si trovano i wrapper nel progetto: `mvnw` o `mv
 java -jar target/traffic-report.jar                      # tutti i giorni, output CSV
 java -jar target/traffic-report.jar --date 2026-11-10    # solo il giorno indicato
 java -jar target/traffic-report.jar --format json        # output JSON
-java -jar target/traffic-report.jar --help
 ```
+
+Da lanciare dalla cartella `exercise-1/`: legge `logfiles/requests.log` e scrive `reports/ipaddr.csv` (o `reports/ipaddr.json`).
+
+| Opzione | Descrizione |
+|---|---|
+| `--date yyyy-MM-dd` | include solo le richieste del giorno indicato (default: tutti i giorni) |
+| `--format csv\|json` | formato di output (default: `csv`) |
+
+| Exit code | Significato |
+|---|---|
+| `0` | report generato, il percorso viene stampato su standard output |
+| `1` | errore, con il messaggio su standard error: `logfiles/requests.log` mancante o illeggibile, valore mancante, data o formato non validi |
+
+Le opzioni vengono lette per nome: argomenti non riconosciuti vengono ignorati.
 
 ## Formato di input
 
@@ -40,6 +53,7 @@ Esempio di riga:
 - `REMOTE_ADDR` per semplicitá nella validazione controllo solamente che non abbia spazi nel mezzo
 - **Spazi**: ogni campo viene ripulito dagli spazi iniziali e finali prima della validazione
 - **Percentuali**: calcolate sui record inclusi nel report e non sul totale. Inoltre con l'arrotondamento a 2 decimale `HALF_UP` con la somma si possono ottenere `99.99` o `100.01`. Se il totale di una colonna è 0, tutte le sue percentuali valgono `0.00`
+- **Giorno del report**: l'esercizio parla di report giornaliero, ma senza `--date` il report include tutti i giorni presenti nel log; con `--date yyyy-MM-dd` si ottiene il report del singolo giorno
 - **Ordinamento**: a parità di richieste vince byte decrescenti; a parità anche di byte, per IP in ordine alfabetico
 - **Output**: `reports/ipaddr.csv` oppure `reports/ipaddr.json`. La cartella `reports/` viene creata se manca e se il report esiste giá viene sovrascritto
 - **CSV**: separatore `,`, fine riga `\r\n`, punto decimale `.`, intestazione `ip_address,requests,requests_pct,bytes,bytes_pct`. Senza righe resta solo l'intestazione
@@ -57,6 +71,8 @@ L'esercizio chiede di non usare framework ma solo Java, ho deciso di utilizzare 
 ## Possibili miglioramenti
 
 - Percorsi di input e output configurabili
+- Errore d'uso per opzioni sconosciute o ripetute (ora vengono ignorate, e per un'opzione ripetuta vale la prima)
+- Opzione `--help` ed exit code distinti per errori d'uso e di I/O
 - Evitare sovrascritture di report vecchi
 - Scrittura del report in un file temporaneo e poi rename, così che un errore a metà non lasci un file parziale
 - Validazione stretta degli indirizzi IPv4/IPv6
