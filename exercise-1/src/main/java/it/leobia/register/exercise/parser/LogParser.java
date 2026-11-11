@@ -1,12 +1,14 @@
-package it.leobia.register.exercise;
+package it.leobia.register.exercise.parser;
 
 import java.time.LocalDateTime;
 import java.time.format.DateTimeParseException;
 import java.util.Optional;
 
+import it.leobia.register.exercise.model.LogEntry;
+
 /**
  * Parses one line of the requests log file: ({@code TIMESTAMP;BYTES;STATUS;REMOTE_ADDR})
- * 
+ *
  */
 public final class LogParser {
 
@@ -15,14 +17,14 @@ public final class LogParser {
 
 
     /**
-     * Parse a line of the file the request log file. It applies a basic validation: 
+     * Parse a line of the file the request log file. It applies a basic validation:
      * - checks if the fields are exactly 4
      * - checks if the status is not empty
      * - checks if the ip adress is at least not empty and not containing spaces in between other chars
      * - checks if bytes are parsable and a positive number
      * - checks if the timestamp is parsable
      */
-    public Optional<LogRecord> parse(String line) {
+    public Optional<LogEntry> parse(String line) {
         if (line.isBlank()) {
             return Optional.empty();
         }
@@ -44,7 +46,7 @@ public final class LogParser {
             if (bytes < 0) {
                 return Optional.empty();
             }
-            return Optional.of(new LogRecord(timestamp, bytes, status, ipAddress));
+            return Optional.of(new LogEntry(timestamp, bytes, status, ipAddress));
         } catch (DateTimeParseException | NumberFormatException e) {
             return Optional.empty();
         }

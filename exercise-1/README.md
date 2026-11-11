@@ -39,6 +39,7 @@ Esempio di riga:
 - `STATUS` é preso da RFC 2616 ed é tipo `OK`, `Not Found`
 - `REMOTE_ADDR` per semplicitá nella validazione controllo solamente che non abbia spazi nel mezzo
 - **Spazi**: ogni campo viene ripulito dagli spazi iniziali e finali prima della validazione
+- **Percentuali**: calcolate sui record inclusi nel report e non sul totale. Inoltre con l'arrotondamento a 2 decimale `HALF_UP` con la somma si possono ottenere `99.99` o `100.01`. Se il totale di una colonna è 0, tutte le sue percentuali valgono `0.00`
 - **Ordinamento**: a parità di richieste vince byte decrescenti; a parità anche di byte, per IP in ordine alfabetico
 - **Output**: `reports/ipaddr.csv` oppure `reports/ipaddr.json`. La cartella `reports/` viene creata se manca e se il report esiste giá viene sovrascritto
 
@@ -51,10 +52,12 @@ L'esercizio chiede di non usare framework ma solo Java, ho deciso di utilizzare 
 
 - Percorsi di input e output configurabili
 - Evitare sovrascritture di report vecchi
+- Scrittura del report in un file temporaneo e poi rename, così che un errore a metà non lasci un file parziale
 - Validazione stretta degli indirizzi IPv4/IPv6
 - Timestamp con fuso orario
 - Test di carico e di performance
 - Validazione più ricca, che riporti nel warning il motivo dello scarto (campo mancante, timestamp non valido, byte negativi, ...)
-- Più casi di test per il parser: riga vuota o di soli spazi e equivalente per i singoli campi, byte oltre il limite di `long`
+- Più casi di test per il parser: spazi attorno ai campi, riga vuota o di soli spazi e equivalente per i singoli campi, byte oltre il limite di `long`
+- Test sull'ordinamento a parità sia di richieste sia di byte (IP in ordine crescente)
 - Percentuali calcolate con il metodo dei resti maggiori, così che ogni colonna sommi esattamente `100.00` (ora l'arrotondamento `HALF_UP` può dare `99.99` o `100.01`)
 - Campi CSV tra virgolette secondo RFC 4180, nel caso un valore contenga `,` o `"`
